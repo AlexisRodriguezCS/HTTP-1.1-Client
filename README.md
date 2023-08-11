@@ -3,7 +3,7 @@
 <table>
 <tr>
 <td>
-  A simple HTTP 1.1 Client that implements the GET method and includes the basics of the HTTP/1.1.  The program implements a function that takes a URL and returns the body bytes by parsing, checking for the response of the server, and making a GET request.
+  The URL Retriever Script is a Python tool designed for beginners to easily retrieve the contents of a web page using HTTP or HTTPS protocols. This script forms a GET request, establishes a socket connection to the provided URL, and captures the response body of the web document. The script intelligently extracts protocol, host, path, and port information from the URL, allowing users to retrieve specific parts of a webpage. The user-friendly command-line interface makes it straightforward to use the script by providing the URL as an argument. This tool is an ideal starting point for those seeking a simple way to access web content programmatically without diving into complex web scraping techniques.
 </td>
 </tr>
 </table>
