@@ -1,110 +1,123 @@
+"""
+File: main.py
+Author: Alexis Rodriguez
+
+Description:
+This script defines functions to retrieve the body of a document from a given URL using HTTP/HTTPS protocol.
+It forms a GET request and establishes a socket connection to retrieve the response.
+
+Usage:
+python main.py <url>
+"""
+
+# Import necessary modules
 import logging
 import socket
 import sys
 
-
+# Function to retrieve the body of the document at the given URL
 def retrieve_url(url):
     """
-    return bytes of the body of the document at url
+    Retrieve the body of the document at the given URL.
+    
+    Args:
+        url (str): The URL of the document.
+    
+    Returns:
+        bytes or None: The body of the document as bytes, or None if retrieval fails.
     """
-    # Get the protocol (http or https)
-    index_of_protocol = url.find(":")
-    protocol = url[0:index_of_protocol]
-    host = ""
-    path = ""
-    port = 0
-
-    # Get String without protocol
-    # 'http://www.example.com' -> 'www.example.com' or
-    # 'http://wonderousshinyinnerspell.neverssl.com/online'
-    # -> 'wonderousshinyinnerspell.neverssl.com/online'
-    index_of_protocol = url.find("//")
-    temp_string = url[index_of_protocol + 2:len(url)]
-    has_path = False
-
-    # Check for '/'
+    # Extract protocol, host, path, and port information from the URL
+    index_of_protocol = url.find(":")  # Find the index of protocol separator ":"
+    protocol = url[0:index_of_protocol]  # Extract the protocol
+    host = ""  # Initialize host as an empty string
+    path = ""  # Initialize path as an empty string
+    port = 0   # Initialize port as 0
+    
+    index_of_protocol = url.find("//")  # Find the index of "//" after protocol
+    temp_string = url[index_of_protocol + 2:len(url)]  # Extract the string after "//"
+    has_path = False  # Initialize has_path as False
+    
     if temp_string.find("/") != -1:
-        # Get string up to path
-        has_path = True
-        temp_string = temp_string[0:temp_string.find("/")]
-    # Check for Port
-    has_port = False
+        has_path = True  # Set has_path to True if '/' is found in temp_string
+        temp_string = temp_string[0:temp_string.find("/")]  # Extract host part of URL
+    
+    has_port = False  # Initialize has_port as False
     if temp_string.find(':') != -1:
-        # Get port
-        has_port = True
-        index = temp_string.find(':')
-        port = temp_string[index + 1: len(temp_string)]
-
-    # Get the Host
+        has_port = True  # Set has_port to True if ':' is found in temp_string
+        index = temp_string.find(':')  # Find the index of port separator ":"
+        port = temp_string[index + 1: len(temp_string)]  # Extract port
+    
     if has_port is True:
-        index = temp_string.find(":")
-        host = temp_string[0: index]
+        index = temp_string.find(":")  # Find the index of port separator ":"
+        host = temp_string[0: index]   # Extract host
     else:
-        host = temp_string
-
-    # Check if there is a port, if not set default depending on protocol
+        host = temp_string  # If no port, host is the entire temp_string
+    
     if has_port is False:
         if protocol == "http":
-            port = "80"
+            port = "80"  # Set default port 80 for HTTP
         elif protocol == "https":
-            port = "443"
-    # Check if there is a path, if not set it to "/"
+            port = "443"  # Set default port 443 for HTTPS
+    
     if has_path is False:
-        path = "/"
+        path = "/"  # Set default path as "/"
     elif has_path is True:
-        temp = url[index_of_protocol + 2:len(url)]
-        index = temp.find('/')
-        path = temp[index + 1: len(url)]
-        # Check if path was just '/'
+        temp = url[index_of_protocol + 2:len(url)]  # Extract the string after "//"
+        index = temp.find('/')  # Find the index of path separator "/"
+        path = temp[index + 1: len(url)]  # Extract path
         if len(path) == 0:
-            path = "/"
-
-    # call formGetRequest and get GET request
+            path = "/"  # If path is empty, set it to "/"
+    
+    # Form the GET request
     get = get_request(host, port, path)
-    response = b""
-    # create socket
+    
+    response = b""  # Initialize response as bytes
+    # Create a socket and retrieve the response
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.connect((host, int(port)))
-            sock.sendall(get.encode())
-            response = sock.recv(1024)
+            sock.connect((host, int(port)))  # Connect to host and port
+            sock.sendall(get.encode())  # Send the GET request
+            response = sock.recv(1024)  # Receive initial response
             while True:
-                current_data = sock.recv(1024)
-                response = response + current_data
-                if not current_data:
+                current_data = sock.recv(1024)  # Receive data in chunks of 1024 bytes
+                response = response + current_data  # Append received data to response
+                if not current_data:  # If no more data is received, break the loop
                     break
     except socket.gaierror:
-        return None
-
-    # Check if we received a "200" OK response from the server
+        return None  # Return None if there's a socket error
+    
+    # Check if we received a "200 OK" response from the server
     if response.find(b'200 OK') != -1:
-        # Look for starting point of body of the document at url
+        # Find the starting point of the body of the document in the response
         index = response.find(b"\r\n\r\n") + 4
-        return response[index:]
-    return None
+        return response[index:]  # Return the body of the document
+    return None  # Return None if response is not "200 OK"
 
-
+# Function to form a GET request
 def get_request(host, port, path):
-    """Form the get request."""
-    # Get /Path HTTP/1.1
-    # Host: www.example.com:80
-    # Connection: close
-    # Blank line
-    request = ""
+    """
+    Form a GET request for the specified host, port, and path.
+    
+    Args:
+        host (str): The host of the request.
+        port (str): The port for the request.
+        path (str): The path of the request.
+    
+    Returns:
+        str: The formed GET request as a string.
+    """
     if path == "/":
-        # Get / HTTP/1.1
-        get_rq = "GET / HTTP/1.1\r\n"
-        host_rq = "Host: " + host + ":" + port + "\r\n"
-        conn = "Connection: close\r\n\r\n"
-        request = get_rq + host_rq + conn
+        get_rq = "GET / HTTP/1.1\r\n"  # Form GET request with root path
     else:
-        # Get /path HTTP/1.1
-        get_rq = "GET /" + path + " HTTP/1.1\r\n"
-        host_rq = "Host: " + host + ":" + port + "\r\n"
-        conn = "Connection: close\r\n\r\n"
-        request = get_rq + host_rq + conn
-    return request
+        get_rq = "GET /" + path + " HTTP/1.1\r\n"  # Form GET request with specified path
+    
+    host_rq = "Host: " + host + ":" + port + "\r\n"  # Form host header
+    conn = "Connection: close\r\n\r\n"  # Close connection after response
+    
+    request = get_rq + host_rq + conn  # Concatenate all parts to form the request
+    return request  # Return the formed GET request as a string
 
+# Entry point of the script
 # if __name__ == "__main__":
-#     sys.stdout.buffer.write(retrieve_url(sys.argv[1]))
-# pylint: disable=no-member
+    # Retrieve and write the URL content to standard output buffer
+    # sys.stdout.buffer.write(retrieve_url(sys.argv[1]))
