@@ -88,6 +88,5 @@ def main(args):
         compare_output(testcase, oracle=retrieve_url_bonus)
 
 
-
 if __name__ == "__main__":
     main(sys.argv[1:])
