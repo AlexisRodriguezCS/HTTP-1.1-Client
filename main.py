@@ -118,6 +118,6 @@ def get_request(host, port, path):
     return request  # Return the formed GET request as a string
 
 # Entry point of the script
-# if __name__ == "__main__":
-    # Retrieve and write the URL content to standard output buffer
-    # sys.stdout.buffer.write(retrieve_url(sys.argv[1]))
+if __name__ == "__main__":
+    Retrieve and write the URL content to standard output buffer
+    sys.stdout.buffer.write(retrieve_url(sys.argv[1]))
